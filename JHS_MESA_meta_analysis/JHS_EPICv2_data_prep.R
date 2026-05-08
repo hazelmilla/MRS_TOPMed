@@ -1,4 +1,68 @@
 ##### Data prep for MRS analysis in EPICv2 Data #####
+
+#########################################################
+############# PREPARE DNA METHYLATION DATA ##############
+#########################################################
+
+###### EPICV2 Data ######
+library(dplyr)
+library(tidyverse)
+
+v2_path = "/proj/azannas/projects/JHS_Batch2"
+path = "/work/users/h/e/hemilla/FVIII_analysis"
+path1 = "/work/users/h/e/hemilla/"
+
+setwd(v2_path)
+load("beta.noXY.no.impute.RData")
+
+setwd(path1)
+subjid <- read.csv("subjid_TOE.csv", header = TRUE)
+analysis <- read.csv("analysis1_2020_update_dbgap_id.csv", header = TRUE)
+
+setwd("/work/users/h/e/hemilla/FVIII_analysis")
+f8 <- read.delim("FVIII_JHS_dbGaP.txt", header = TRUE, sep="\t")
+
+dat <- merge(analysis, f8, by = "SUBJECT_ID")
+
+colnames(beta.noXY) # TOE ID
+rownames(beta.noXY) # CPG site
+
+names <- sapply(strsplit(rownames(beta.noXY), "_"), `[`, 1)
+rownames(beta.noXY) <- names
+dim(beta.noXY) #[1] 860960   1689
+
+# find correspondence between TOEID and SUBJECT_ID
+beta <- beta.noXY %>% t() %>% as.data.frame()
+beta$TOEID <- rownames(beta)
+
+tail(colnames(beta))
+colnames(subjid)
+
+beta1 <- merge(beta, subjid, by = "TOEID")
+
+dim(beta1) #[1] 1687 860962
+rownames(beta1)
+colnames(beta1)
+
+rownames(beta1) <- beta1$SUBJECT_ID
+rownames(beta1)
+colnames(beta1)
+
+drop <- c("TOEID", "SUBJECT_ID")
+beta1 = beta1[,!(colnames(beta1) %in% drop)]
+
+beta <- beta1 %>% as.matrix() %>% t()
+dim(beta) #[1] 860960   1687
+colnames(beta) # subjid
+rownames(beta) # cpg
+
+setwd(path)
+save(beta, file = "beta.v2.subjid.RData")
+
+###############################################
+############# PREPARE PHENO DATA ##############
+###############################################
+
 library(dplyr)
 library(tidyverse)
 
