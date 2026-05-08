@@ -16,9 +16,7 @@ setwd(path2)
 coef <- read.csv("meta_coef_sig_annotated_SLEs.csv", header = TRUE,
                  row.names = 1)
 
-###### All participants ########
-# see if individual CpGs are associated with stress
-# sex, age, smoking, alc, BMI, marriage, SES, PC1-10, Houseman cell types
+# covariates: sex, age, smoking, alc, BMI, marriage, SES, PC1-10, Houseman cell types
 data <- data %>% drop_na(stress2cat) %>% drop_na(sex) %>% drop_na(age) %>%
   drop_na(currentSmoker) %>% drop_na(BMI) %>% drop_na(Income) %>% 
   drop_na(edu3cat) %>% drop_na(alc) %>% drop_na(marital2cat) %>% 
