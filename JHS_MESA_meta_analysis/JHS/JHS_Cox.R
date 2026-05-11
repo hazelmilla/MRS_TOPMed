@@ -111,6 +111,86 @@ v1_bonf_cox <- coefficients
 setwd("/Users/hazelmilla/Desktop/Zannas_lab/JHS_MESA_meta_analysis/Input")
 write.csv(v1_bonf_cox, file = "v1_cox_results_bonf.csv")
 
+######## MRS_TNF #########
+library(dplyr)
+library(tidyverse)
+library(survival)
+library(survminer)
+
+setwd("/Users/hazelmilla/Desktop/Zannas_lab/MRS_WHI_JHS/WHI_TNF_sites_JHS")
+
+chd <- read.csv("Input/chd_data.csv", header = TRUE)
+mrs <- read.csv("Input/TNF_sites_MRS_JHSv1.csv", header = TRUE)
+
+colnames(mrs)[1] <- "Sample_Name"
+data_unfiltered <- merge(mrs, chd, by = "Sample_Name")
+data_unfiltered <- subset(data_unfiltered, select = -X)
+dim(data_unfiltered)
+#[1] 1554   41
+
+data <- data_unfiltered %>% drop_na(CHD) %>% drop_na(days_to_event) %>%
+  drop_na(sex) %>% drop_na(age) %>%
+  drop_na(currentSmoker) %>% drop_na(BMI) %>% drop_na(Income) %>% 
+  drop_na(edu3cat) %>% drop_na(alc) %>% drop_na(marital2cat) %>% 
+  drop_na(nbSESanascore) %>% drop_na(TNF_MRS)
+dim(data)
+#[1] 1291   41
+
+res_fit <- lm(TNF_MRS ~ sex + age + 
+                currentSmoker + BMI + Income + edu3cat + alc + 
+                marital2cat + nbSESanascore + 
+                PC1 + PC2 +  PC3 + PC4 + PC5 + PC6 + PC7 + 
+                PC8 + PC9 + PC10 + NK + Mono + Gran + 
+                Bcell + CD8T + CD4T, data=data)
+
+data$MRS_resid <- resid(res_fit)
+
+MRS_median <- summary(data$MRS_resid)[3]
+data$MRSresid2cat[data$MRS_resid <= MRS_median] <- 1
+data$MRSresid2cat[data$MRS_resid > MRS_median] <- 2
+table(data$MRSresid2cat) # 1 - 646,   2 - 645
+
+model <- coxph(Surv(days_to_event, CHD) ~ MRSresid2cat, data = data)
+
+test_ph <- cox.zph(model)
+print(test_ph)
+
+# Summarize the model
+coefficients <- summary(model)$coefficients
+colnames(coefficients) <- c("Estimate", "HR", "SE",
+                            "z", "P_val")
+
+write.csv(coefficients, file = "Output/TNF_MRS_CHD_JHSv1.csv")
+
+# Run Cox regression for average TNF methylation
+res_fit <- lm(TNF_avg ~ sex + age + 
+                currentSmoker + BMI + Income + edu3cat + alc + 
+                marital2cat + nbSESanascore + 
+                PC1 + PC2 +  PC3 + PC4 + PC5 + PC6 + PC7 + 
+                PC8 + PC9 + PC10 + NK + Mono + Gran + 
+                Bcell + CD8T + CD4T, data=data)
+
+data$avg_resid <- resid(res_fit)
+
+avg_median <- summary(data$avg_resid)[3]
+data$avg.resid2cat[data$avg_resid <= avg_median] <- 1
+data$avg.resid2cat[data$avg_resid > avg_median] <- 2
+table(data$avg.resid2cat) # 1 - 646,   2 - 645
+
+v1_data <- data
+
+model <- coxph(Surv(days_to_event, CHD) ~ avg.resid2cat, data = data)
+
+test_ph <- cox.zph(model)
+print(test_ph)
+
+# Summarize the model
+coefficients <- summary(model)$coefficients
+colnames(coefficients) <- c("Estimate", "HR", "SE",
+                            "z", "P_val")
+
+write.csv(coefficients, file = "Output/TNF_avg_CHD_JHSv1.csv")
+
 ########################################
 ###### JHS EPICv2 Cox regression #######
 ########################################
@@ -223,3 +303,53 @@ v2_bonf_cox <- coefficients
 
 setwd("/Users/hazelmilla/Desktop/Zannas_lab/JHS_MESA_meta_analysis/Input")
 write.csv(v2_bonf_cox, file = "v2_cox_results_bonf.csv")
+
+######## MRS_TNF #########
+library(dplyr)
+library(tidyverse)
+library(survival)
+library(survminer)
+
+setwd("/Users/hazelmilla/Desktop/Zannas_lab/MRS_WHI_JHS/WHI_TNF_sites_JHS")
+
+chd_2 <- read.csv("Input/chd_data_v2.csv", header = TRUE)
+mrs_2 <- read.csv("Input/TNF_sites_MRS_JHSv2.csv", header = TRUE)
+
+colnames(mrs_2)[1] <- "SUBJECT_ID"
+data_unfiltered <- merge(mrs_2, chd_2, by = "SUBJECT_ID")
+
+data <- data_unfiltered %>% drop_na(CHD) %>% drop_na(days_to_event) %>%
+  drop_na(sex) %>% drop_na(age) %>%
+  drop_na(currentSmoker) %>% drop_na(BMI) %>% drop_na(Income) %>% 
+  drop_na(edu3cat) %>% drop_na(alc) %>% drop_na(marital2cat) %>% 
+  drop_na(nbSESanascore) %>% drop_na(TNF_MRS)
+dim(data)
+#[1] 1202   45
+
+res_fit <- lm(TNF_MRS ~ sex + age + 
+                currentSmoker + BMI + Income + edu3cat + alc + 
+                marital2cat + nbSESanascore + 
+                PC1 + PC2 +  PC3 + PC4 + PC5 + PC6 + PC7 + 
+                PC8 + PC9 + PC10 + NK + Mono + Gran + 
+                Bcell + CD8T + CD4T, data=data)
+
+data$MRS_resid <- resid(res_fit)
+
+MRS_median <- summary(data$MRS_resid)[3]
+data$MRSresid2cat[data$MRS_resid <= MRS_median] <- 1
+data$MRSresid2cat[data$MRS_resid > MRS_median] <- 2
+table(data$MRSresid2cat) # 1 - 601,   2 - 601
+
+model <- coxph(Surv(days_to_event, CHD) ~ MRSresid2cat, data = data)
+
+test_ph <- cox.zph(model)
+print(test_ph)
+
+# Summarize the model
+coefficients <- summary(model)$coefficients
+colnames(coefficients) <- c("Estimate", "HR", "SE",
+                            "z", "P_val")
+
+write.csv(coefficients, file = "Output/TNF_MRS_CHD_v2.csv")
+
+
