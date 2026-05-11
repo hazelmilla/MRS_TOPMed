@@ -68,7 +68,7 @@ sum(meta_coef_df$p_meta < 0.05) # 57
 sum(meta_coef_df$q_meta < 0.05) # 0
 sum(meta_coef_df$bonferroni < 0.05) # 0
 
-write.csv(meta_coef_df, file = "Output/CpG_stress_meta_MESA_JHS_all_common_probes_FDR.csv")
+write.csv(meta_coef_df, file = "Output/CpG_stress_meta_MESA_JHS_all_common_probes.csv")
 
 
 # run CpGs with significant heterogeneity for random effects
@@ -114,5 +114,5 @@ sum(meta_coef_df$p_meta < 0.05) # 0
 sum(meta_coef_df$q_meta < 0.05) # 0
 sum(meta_coef_df$bonferroni < 0.05) # 0
 
-write.csv(meta_coef_df, file = "Output/CpG_stress_meta_JHS_MESA_het_probes_FDR.csv")
+write.csv(meta_coef_df, file = "Output/CpG_stress_meta_JHS_MESA_het_probes.csv")
 
