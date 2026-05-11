@@ -152,7 +152,6 @@ mesa_bonf_all # See "MESA_Cox.R" for data prep
 v1_bonf_all # See "JHS_Cox.R" for data prep
 v2_bonf_all # See "JHS_Cox.R" for data prep
 
-#### All ####
 v1 <- subset(v1_bonf_all, select = c("SUBJECT_ID", "CHD", "days_to_event", "MRSresid2cat", "sex"))
 v2 <- subset(v2_bonf_all, select = c("SUBJECT_ID", "CHD", "days_to_event", "MRSresid2cat", "sex"))
 mesa <- subset(mesa_bonf_all, select = c("sidno", "chda", "chdatt", "MRSresid2cat", "gender1"))
@@ -194,3 +193,35 @@ event_plot
 
 setwd("~/Library/CloudStorage/OneDrive-UniversityofNorthCarolinaatChapelHill/002 Zannas_lab/MRS TOPMed/JHS_MESA_meta_analysis/Results/")
 ggsave("MRS_CHD_Bonferroni.png", event_plot, width = 10, height = 7, units = "in")
+
+library(rmeta)
+library(tidyverse)
+library(dplyr)
+
+
+############ MRS_TNF #############
+setwd("/Users/hazelmilla/Desktop/Zannas_lab/MRS_WHI_JHS/WHI_TNF_sites_JHS/Output")
+
+v1 <- read.csv("TNF_MRS_CHD_JHSv1.csv", header = TRUE)
+v2 <- read.csv("TNF_MRS_CHD_v2.csv", header = TRUE)
+
+setwd("/Users/hazelmilla/Desktop/Zannas_lab/MRS_WHI_MESA/Output/")
+mesa <- read.csv("MESA_cox_results_tnf.csv", header = TRUE)
+
+v1$study <- ("EPICv1")
+v2$study <- ("EPICv2")
+mesa$study <- ("MESA")
+
+meta_cox <- rbind(v1, v2, mesa)
+meta_cox <- as.data.frame(meta_cox)
+glimpse(meta_cox)
+
+meta <- meta.summaries(log(HR), SE, method = c("fixed"), logscale = FALSE,
+                       names = study, conf.level = 0.95, data = meta_cox,
+                       subset = NULL)
+run_coef <- c(meta$summary, exp(meta$summary), meta$se.summary, meta$het[3], meta$test)
+names(run_coef) <- c("Coefficient", "HR", "SE", "p_het", "z", "p_meta")
+print(run_coef)
+
+setwd("/Users/hazelmilla/Desktop/Zannas_lab/JHS_MESA_meta_analysis/Output")
+write.csv(run_coef, "JHS_MESA_CHD_TNF_MRS.csv")
