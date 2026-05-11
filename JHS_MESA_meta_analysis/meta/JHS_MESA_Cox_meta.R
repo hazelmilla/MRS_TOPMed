@@ -1,27 +1,106 @@
-#
+####################################################
+########## COX REGRESSION META-ANALYSIS ###########
+####################################################
 
+library(rmeta)
+
+####### FDR-adjusted sites ######
+mesa_path <- "~/Library/CloudStorage/OneDrive-UniversityofNorthCarolinaatChapelHill/002 Zannas_lab/MRS TOPMed/MRS_WHI_MESA/Output/" # directory for MESA Cox results
+mesa <- read.csv(paste0(mesa_path, "MESA_cox_results_fdr.csv"), header = TRUE)
+
+jhs_path <- "~/Library/CloudStorage/OneDrive-UniversityofNorthCarolinaatChapelHill/002 Zannas_lab/MRS TOPMed/JHS_MESA_meta_analysis/Input/"
+v1 <- read.csv(paste0(jhs_path, "v1_cox_results_fdr.csv"), header = TRUE)
+v2 <- read.csv(paste0(jhs_path, "v2_cox_results_fdr.csv"), header = TRUE)
+
+v1$study <- ("JHSv1")
+v2$study <- ("JHSv2")
+mesa$study <- ("MESA")
+meta_cox <- rbind(v1, v2, mesa)
+meta_cox <- as.data.frame(meta_cox)
+glimpse(meta_cox)
+
+meta <- meta.summaries(log(HR), SE, method = c("fixed"), logscale = FALSE,
+                       names = study, conf.level = 0.95, data = meta_cox,
+                       subset = NULL)
+run_coef <- c(meta$summary, meta$se.summary, meta$het[3], meta$test, NA)
+names(run_coef) <- c("Coefficient", "SE", "p_het", "z", "p_meta", "HR")
+print(run_coef)
+run_coef[6] <- exp(run_coef[1])
+print(meta) # 95% CI (-0.0346, 0.505)
+
+# Compute CI: b - (1.96 * SE), b + (1.96*SE)
+run_coef$SE
+
+computeCI <- function(hr, se){
+  
+  HR <- hr
+  SE <- se
+  
+  lowerCI <- HR - (1.96 * SE)
+  upperCI <- HR + (1.96 * SE)
+  
+  print(paste0("(", round(lowerCI, 2), ", ", round(upperCI, 2), ")"))
+}
+
+ci_vals <- computeCI(run_coef["HR"], run_coef["SE"])
+
+run_coef <- run_coef %>% t() %>% as.data.frame()
+
+rownames(run_coef) <- "CHD_FDR"
+run_coef$CI <- ci_vals
+
+CHD_FDR <- run_coef
+
+
+meta_cox_fdr_all <- run_coef
+setwd("/Users/hazelmilla/Desktop/Zannas_lab/JHS_MESA_meta_analysis/Output")
+write.csv(meta_cox_fdr_all, "JHS_MESA_CHD_MRS_FDR.csv")
+
+####### Bonferroni-adjusted sites ######
+mesa <- read.csv(paste0(mesa_path, "MESA_cox_results_bonf.csv"), header = TRUE)
+
+v1 <- read.csv(paste0(jhs_path, "v1_cox_results_bonf.csv"), header = TRUE)
+v2 <- read.csv(paste0(jhs_path, "v2_cox_results_bonf.csv"), header = TRUE)
+
+v1$study <- ("JHSv1")
+v2$study <- ("JHSv2")
+mesa$study <- ("MESA")
+meta_cox <- rbind(v1, v2, mesa)
+meta_cox <- as.data.frame(meta_cox)
+glimpse(meta_cox)
+
+meta <- meta.summaries(log(HR), SE, method = c("fixed"), logscale = FALSE,
+                       names = study, conf.level = 0.95, data = meta_cox,
+                       subset = NULL)
+run_coef <- c(meta$summary, meta$se.summary, meta$het[3], meta$test, NA)
+names(run_coef) <- c("Coefficient", "SE", "p_het", "z", "p_meta", "HR")
+print(run_coef)
+run_coef[6] <- exp(run_coef[1])
+print(meta) # 95% CI (0.0185, 0.561)
+
+ci_vals <- computeCI(run_coef["HR"], run_coef["SE"])
+
+run_coef <- run_coef %>% t() %>% as.data.frame()
+
+rownames(run_coef) <- "CHD_Bonf"
+run_coef$CI <- ci_vals
+
+CHD_Bonf <- run_coef
+
+meta_cox_bonf_all <- run_coef
+setwd("/Users/hazelmilla/Desktop/Zannas_lab/JHS_MESA_meta_analysis/Output")
+write.csv(meta_cox_bonf_all, "JHS_MESA_CHD_MRS_Bonferroni.csv")
 
 ###############################################
 ########## PLOT KAPLAN-MEIER CURVES ###########
 ###############################################
 
-######## FDR #############
-# Prep MESA data using lines 5 - 52 "Cox_MESA_MRS_resid.R"
-mesa_fdr_all
-mesa_fdr_f #71-89
-mesa_fdr_m #106-124
+############ FDR #############
 
-# Prep JHS v1 data using lines 6 - 53 "MRSresidual_CHD_JHS.R"
-v1_fdr_all
-v1_fdr_f #73-99
-v1_fdr_m #117-143
+mesa_fdr_all # See "MESA_Cox.R" for data prep
+v1_fdr_all # See "JHS_Cox.R" for data prep
+v2_fdr_all # See "JHS_Cox.R" for data prep
 
-# Prep JHS v2 data using lines 164 - 209 "MRSresidual_CHD_JHS.R"
-v2_fdr_all
-v2_fdr_f #230-256
-v2_fdr_m #274-300
-
-#### All ####
 v1 <- subset(v1_fdr_all, select = c("SUBJECT_ID", "CHD", "days_to_event", "MRSresid2cat", "sex"))
 v2 <- subset(v2_fdr_all, select = c("SUBJECT_ID", "CHD", "days_to_event", "MRSresid2cat", "sex"))
 mesa <- subset(mesa_fdr_all, select = c("sidno", "chda", "chdatt", "MRSresid2cat", "gender1"))
@@ -66,91 +145,12 @@ event_plot
 setwd("~/Library/CloudStorage/OneDrive-UniversityofNorthCarolinaatChapelHill/002 Zannas_lab/MRS TOPMed/JHS_MESA_meta_analysis/Results/")
 ggsave("MRS_CHD_FDR.png", event_plot, scale = 1, width = 10, height = 7, units = "in")
 
-#### Female ####
-v1 <- subset(v1_fdr_f, select = c("SUBJECT_ID", "CHD", "days_to_event", "MRSresid2cat", "sex"))
-v2 <- subset(v2_fdr_f, select = c("SUBJECT_ID", "CHD", "days_to_event", "MRSresid2cat", "sex"))
-mesa <- subset(mesa_fdr_f, select = c("sidno", "chda", "chdatt", "MRSresid2cat", "gender1"))
-
-colnames(mesa) <- c("SUBJECT_ID", "CHD", "days_to_event", "MRSresid2cat", "sex")
-data_f <- rbind(v1, v2, mesa)
-
-surv_obj <- Surv(data_f$days_to_event, data_f$CHD == 1)
-km_fit <- survfit(surv_obj ~ MRSresid2cat, data = data_f)
-
-event_plot <- ggsurvplot(km_fit, 
-                         data = data_f, 
-                         pval = FALSE, 
-                         conf.int = TRUE,
-                         fun = "event",  # This inverts to show event probability
-                         legend.labs = c("Low", "High"),
-                         legend.title = "MRS Level",
-                         title = "CHD Cumulative Incidence by MRS Level (FDR) - Female",
-                         xlab = "Time to Event in Days",
-                         ylab = "CHD Probability")$plot + 
-  theme(panel.grid.major = element_line(colour = "grey90", linetype = "solid", linewidth = 0.5),
-        panel.grid.minor = element_line(color = "grey90", linetype = "solid", linewidth = 0.5)) +
-  annotate("text", 
-           x = 2000,
-           y = 0.1,
-           label = "p = 0.4047",
-           size = 5,
-           color = "black")
-
-event_plot
-ggsave("MRS_CHD_FDR_female.png", event_plot, width = 10, height = 7, units = "in")
-
-#### Male ####
-v1 <- subset(v1_fdr_m, select = c("SUBJECT_ID", "CHD", "days_to_event", "MRSresid2cat", "sex"))
-v2 <- subset(v2_fdr_m, select = c("SUBJECT_ID", "CHD", "days_to_event", "MRSresid2cat", "sex"))
-mesa <- subset(mesa_fdr_m, select = c("sidno", "chda", "chdatt", "MRSresid2cat", "gender1"))
-
-colnames(mesa) <- c("SUBJECT_ID", "CHD", "days_to_event", "MRSresid2cat", "sex")
-data_m <- rbind(v1, v2, mesa)
-
-surv_obj <- Surv(data_m$days_to_event, data_m$CHD == 1)
-km_fit <- survfit(surv_obj ~ MRSresid2cat, data = data_m)
-
-event_plot <- ggsurvplot(km_fit, 
-                         data = data_m, 
-                         pval = FALSE, 
-                         conf.int = TRUE,
-                         fun = "event",  # This inverts to show event probability
-                         legend.labs = c("Low", "High"),
-                         legend.title = "MRS Level",
-                         title = "CHD Cumulative Incidence by MRS Level (FDR) - Male",
-                         xlab = "Time to Event in Days",
-                         ylab = "CHD Probability")$plot + 
-  theme(panel.grid.major = element_line(colour = "grey90", linetype = "solid", linewidth = 0.5),
-        panel.grid.minor = element_line(color = "grey90", linetype = "solid", linewidth = 0.5)
-  ) +
-  annotate("text", 
-           x = 2000,
-           y = 0.1,
-           label = "p = 0.5781",
-           size = 5,
-           color = "black")
-
-event_plot
-
-ggsave("MRS_CHD_FDR_male.png", event_plot, width = 10, height = 7, units = "in")
-
-
-######## Bonferroni #############
+############ Bonferroni #############
 
 # Prepare data using lines 142 - 187 in "Cox_MESA_MRS_resid.R"
-mesa_bonf_all
-mesa_bonf_f #206-223
-mesa_bonf_m #240-257
-
-# Prepare data using lines 326 - 372 in "MRSresidual_CHD_JHS.R"
-v1_bonf_all
-v1_bonf_f #391-417
-v1_bonf_m #435-460
-
-# Prepare data using lines 481 - 525 in "MRSresidual_CHD_JHS.R"
-v2_bonf_all
-v2_bonf_f # 546-571
-v2_bonf_m #589-614
+mesa_bonf_all # See "MESA_Cox.R" for data prep
+v1_bonf_all # See "JHS_Cox.R" for data prep
+v2_bonf_all # See "JHS_Cox.R" for data prep
 
 #### All ####
 v1 <- subset(v1_bonf_all, select = c("SUBJECT_ID", "CHD", "days_to_event", "MRSresid2cat", "sex"))
