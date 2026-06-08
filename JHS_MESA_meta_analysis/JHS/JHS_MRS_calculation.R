@@ -52,6 +52,8 @@ identical(est$IlmnID, rownames(beta))
 
 estimates <- as.matrix(est$beta)
 beta_matrix <- t(as.matrix(beta))
+dim(beta_matrix) # 1709   12
+# 12 of the 13 Bonferroni sites are present
 
 # Calculate the score using matrix multiplication
 MRS_bonferroni <- beta_matrix %*% estimates
