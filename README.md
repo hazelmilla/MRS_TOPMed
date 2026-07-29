@@ -12,5 +12,5 @@ Discovery analyses performed in the Women's Health Initiative (WHI) cohort.
 Generalization meta-analyses performed in the Jackson Heart Study (JHS) and Multi-Ethnic Study of Atherosclerosis (MESA) cohort data.
 - Calculation of MRS
 - Cox regression associating MRS values with all CHD, hard CHD, and MI
-- Cox regression test for sex interaction
+- Cox regression test with sex interaction
 - Permutation resampling analysis
